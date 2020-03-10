@@ -16,5 +16,17 @@ else()
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
 endif()
 
+find_package(Threads REQUIRED)
+
 add_executable(${PROJECT_NAME}
-  src/main.cc)
+  src/main.cc
+  third-party/HidApi/HidApi.cpp)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third-party/HidApi)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
+
+if(NOT MSVC)
+  target_link_libraries(${PROJECT_NAME} udev)
+else()
+  target_link_libraries(${PROJECT_NAME} setupapi)
+endif()

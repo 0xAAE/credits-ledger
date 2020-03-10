@@ -1,0 +1,3 @@
+[submodule "third-party/HidApi"]
+	path = third-party/HidApi
+	url = https://github.com/yigityuce/HidApi.git
