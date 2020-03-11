@@ -1,3 +1,6 @@
 [submodule "third-party/HidApi"]
 	path = third-party/HidApi
 	url = https://github.com/yigityuce/HidApi.git
+[submodule "third-party/cscrypto"]
+	path = third-party/cscrypto
+	url = https://github.com/CREDITSCOM/cscrypto.git

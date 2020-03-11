@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <cscrypto/cscrypto.hpp>
 #include <HidApi.h>
 
 void hidApiErrorCb(HidError err);
