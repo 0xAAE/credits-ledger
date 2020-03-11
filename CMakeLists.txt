@@ -21,6 +21,8 @@ add_subdirectory(third-party/cscrypto)
 find_package(Threads REQUIRED)
 
 add_executable(${PROJECT_NAME}
+  src/nano_s.h
+  src/nano_s.cc
   src/main.cc
   third-party/HidApi/HidApi.cpp)
 
