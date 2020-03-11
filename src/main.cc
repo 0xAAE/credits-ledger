@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "HidApi.h"
+#include <HidApi.h>
 
 void hidApiErrorCb(HidError err);
 void deviceAddedCb(int index, HidDevice dev);
@@ -20,6 +20,8 @@ int main() {
 
     std::cout << "Start nanos lookup..." << std::endl;
 
+    HidDevice nanos;
+
     for (size_t i = 0; i < devList.size(); ++i) {
         std::wcout << "DEVICE:" << std::endl
                    << "   Path        : " << devList[i].getPath().c_str()  << std::endl
@@ -33,36 +35,35 @@ int main() {
                    << "   Usage       : " << devList[i].getUsage()         << std::endl
                    << "   Interface   : " << devList[i].getInterface()     << std::endl
                    << "--------------------------------------------------" << std::endl;
+        nanos = devList[i];
+        break;
     }
 
-    HidDevice nanos;
     std::string hidData;
-    hidData.resize(9);
-    hidData[0] = static_cast<char>(0xE0);
-    hidData[1] = static_cast<char>(0x03);
-    hidData[2] = static_cast<char>(0x00);
-    hidData[3] = static_cast<char>(0x00);
-    hidData[4] = static_cast<char>(0x04);
-    hidData[5] = static_cast<char>(0x00);
-    hidData[6] = static_cast<char>(0x00);
-    hidData[7] = static_cast<char>(0x00);
-    hidData[8] = static_cast<char>(0x00);
+    hidData.resize(64, 0);
 
-    if (devList.size()) {
-        nanos = devList[0];
-    }
+    hidData[0] = static_cast<char>(0x01);
+    hidData[1] = static_cast<char>(0x01);
+    hidData[2] = static_cast<char>(0x05);
+    hidData[3] = static_cast<char>(0x00);
+    hidData[4] = static_cast<char>(0x00);
+    hidData[5] = static_cast<char>(0x00);
+    hidData[6] = static_cast<char>(0x09);
+    hidData[7] = static_cast<char>(0xE0);
+    hidData[8] = static_cast<char>(0x03);
+    hidData[9] = static_cast<char>(0x00);
+    hidData[10] = static_cast<char>(0x00);
+    hidData[11] = static_cast<char>(0x04);
+    hidData[12] = static_cast<char>(0x00);
+    hidData[13] = static_cast<char>(0x00);
+    hidData[14] = static_cast<char>(0x00);
+    hidData[15] = static_cast<char>(0x00);
 
     if (nanos.isInitialized()) {
-        std::cout << "Nano S is initialized." << std::endl;
         if (nanos.open()) {
-            std::cout << "Nano S is open." << std::endl;
+            std::cout << "Nano S is open" << std::endl;
             std::cout << "Write result " << nanos.write(hidData) << std::endl;
             auto s = nanos.read(-1);
-            std::cout << "Read result: ";
-            for (auto c : s) {
-              std::cout << int(c) << " ";
-            }
-            std::cout << std::endl;
         }
     }
 }
