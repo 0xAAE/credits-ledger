@@ -35,29 +35,57 @@ void NanoS::Open() {
   if (!nanos_.open()) {
     throw std::runtime_error("Cannot open ledger device.");
   }
-
-  is_open_ = true;
 }
 
 cscrypto::PublicKey NanoS::GetPublicKey(uint32_t index) {
-  if (!is_open_) {
-    throw std::domain_error("Nano S is not open.");
-  }
+  CheckOpen();
 
   auto packs = Packet::FormPackets(reinterpret_cast<uint8_t*>(&index),
                                    sizeof(index),
                                    Packet::Instruction::kGetPubliKey);
-  for (auto& p : packs) {
-    if (!nanos_.write(p)) {
-      throw std::runtime_error("Cannot write to Nano S.");
-    }
-  }
+  SendPackets(std::move(packs));
 
   auto bytes = Packet::TakeTargetBytes({nanos_.read(kBlockingRead)},
                                        Packet::Instruction::kGetPubliKey);
   cscrypto::PublicKey result;
   std::copy(bytes.begin(), bytes.end(), result.begin());
   return result;
+}
+
+cscrypto::Signature NanoS::Sign(uint32_t key_index, const cscrypto::Hash& hash) {
+  CheckOpen();
+
+  std::vector<uint8_t> data(sizeof(key_index) + hash.size());
+  auto ptr = reinterpret_cast<uint8_t*>(&key_index);
+  std::copy(ptr, ptr + sizeof(key_index), data.begin());
+  std::copy(hash.begin(), hash.end(), data.begin() + sizeof(key_index));
+
+  auto packs = Packet::FormPackets(data.data(), data.size(), Packet::Instruction::kSignHash);
+  SendPackets(std::move(packs));
+
+  std::vector<std::string> signature_packs;
+  signature_packs.push_back(nanos_.read(kBlockingRead));
+  signature_packs.push_back(nanos_.read(kBlockingRead));
+
+  auto bytes = Packet::TakeTargetBytes(signature_packs, Packet::Instruction::kSignHash);
+
+  cscrypto::Signature res;
+  std::copy(bytes.begin(), bytes.end(), res.begin());
+  return res;
+}
+
+void NanoS::CheckOpen() {
+  if (!nanos_.open()) {
+    throw std::runtime_error("Cannot open ledger device.");
+  }
+}
+
+void NanoS::SendPackets(std::vector<std::string>&& packets) {
+  for (auto& p : packets) {
+    if (!nanos_.write(p)) {
+      throw std::runtime_error("Cannot write to Nano S.");
+    }
+  }
 }
 
 } // namespace ledger

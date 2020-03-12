@@ -14,17 +14,17 @@ class NanoS {
 
   void Open();
   cscrypto::PublicKey GetPublicKey(uint32_t index);
-  cscrypto::Signature Sign(uint32_t key_index, const std::vector<uint8_t>& data);
+  cscrypto::Signature Sign(uint32_t key_index, const cscrypto::Hash& hash);
 
  private:
+  void CheckOpen();
+  void SendPackets(std::vector<std::string>&&);
   constexpr static uint16_t kLedgerVendId = 0x2c97;
   constexpr static int kBlockingRead = -1;
 
   HidApi hid_api_;
   HidDeviceList hid_devices_;
   HidDevice nanos_;
-
-  bool is_open_ = false;
 };
 } // namespace ledger
 #endif // NANO_S_H
