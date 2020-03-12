@@ -24,6 +24,8 @@ add_executable(${PROJECT_NAME}
   src/nano_s.h
   src/nano_s.cc
   src/main.cc
+  src/packet.h
+  src/packet.cc
   third-party/HidApi/HidApi.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third-party/HidApi)
