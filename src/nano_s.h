@@ -3,6 +3,7 @@
 
 #include <cscrypto/cscrypto.hpp>
 #include <HidApi.h>
+#include "packet.h"
 
 #include <stdexcept>
 
@@ -19,9 +20,13 @@ class NanoS {
  private:
   void CheckOpen();
   void SendPackets(std::vector<std::string>&&);
+  std::vector<std::string> ReadPackets(Packet::Instruction);
 
   constexpr static uint16_t kLedgerVendId = 0x2c97;
   constexpr static int kBlockingRead = -1;
+
+  constexpr static uint8_t kNumPacksGetPublicKey = 1;
+  constexpr static uint8_t kNumPacksSignHash = 2;
 
   HidApi hid_api_;
   HidDeviceList hid_devices_;

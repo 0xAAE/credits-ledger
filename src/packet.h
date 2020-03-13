@@ -6,12 +6,13 @@
 #include <string>
 #include <vector>
 
+#include <cscrypto/cscrypto.hpp>
+
 namespace ledger {
 
 class Packet {
  public:
   enum class Instruction : uint8_t {
-    kVersion = 0x01,
     kSignHash = 0x02,
     kGetPubliKey = 0x03
   };
@@ -28,9 +29,16 @@ class Packet {
  private:
   Packet(uint8_t* data, uint8_t len, Instruction ins, uint8_t p1, uint8_t p2, uint8_t sq);
 
+  enum ErrorCode : uint16_t {
+    kNotSet = 0,
+    kOk = 0x9000
+  };
+
   std::string&& TakeData() { return std::move(data_); }
   static bool CheckHeader(const std::string&, uint8_t sq);
   static uint16_t GetTotalLen(const std::string&);
+  static bool CheckTotalLen(uint16_t, Instruction);
+  static bool CheckErrorCode(ErrorCode);
 
   constexpr static uint8_t kHidPackSize = 64;
   constexpr static uint8_t kFirstHidHeaderSize = 7;
@@ -38,6 +46,9 @@ class Packet {
   constexpr static uint8_t kApduHeaderSize = 5;
 
   constexpr static uint8_t kClaVal = 0xE0;
+
+  constexpr static uint8_t kGetPubliKeyTotalLen = cscrypto::kPublicKeySize + sizeof(ErrorCode);
+  constexpr static uint8_t kSignHashTotalLen = cscrypto::kSignatureSize + sizeof(ErrorCode);
 
   enum LedgerProtocol : uint8_t {
     kChannelId = 0x01,
@@ -61,10 +72,6 @@ class Packet {
     kP2 = 3,
     kLen = 4,
     kData = 5
-  };
-
-  enum ErrorCode : uint16_t {
-    kOk = 0x9000
   };
 
   std::string data_;

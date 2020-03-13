@@ -54,6 +54,54 @@ Packet::Packet(uint8_t* data, uint8_t len, Instruction ins, uint8_t p1, uint8_t 
             data_.data() + offset + ApduOffsets::kData);
 }
 
+std::vector<uint8_t> Packet::TakeTargetBytes(const std::vector<std::string>& packets,
+                                             Instruction ins) {
+  if (packets.empty()) {
+    throw std::domain_error("No packets to take target bytes.");
+  }
+
+  std::vector<uint8_t> res;
+  uint8_t current_seq = 0;
+  int32_t total_len = 0;
+  ErrorCode err = ErrorCode::kNotSet;
+
+  for (auto& p : packets) {
+    if (!CheckHeader(p, current_seq)) {
+      throw std::runtime_error("Invalid Packet header.");
+    }
+
+    if (current_seq == 0) {
+      total_len = GetTotalLen(p);
+
+      if (!CheckTotalLen(total_len, ins)) {
+        throw std::runtime_error("Invalid Packet Len.");
+      }
+    }
+
+    auto offset = current_seq == 0 ? kFirstHidHeaderSize : kCommonHidHeaderSize;
+
+    bool has_error_code = total_len <= (kHidPackSize - offset);
+    if (has_error_code) {
+      auto ptr = reinterpret_cast<uint8_t*>(&err);
+      std::copy(p.begin() + offset + total_len - sizeof(ErrorCode),
+                p.begin() + offset + total_len,
+                ptr);
+    }
+
+    res.insert(res.end(),
+               p.begin() + offset,
+               !has_error_code ? p.end() : p.begin() + offset + total_len - sizeof(ErrorCode));
+    ++current_seq;
+    total_len = total_len - (kHidPackSize - offset);
+  }
+
+  if (!CheckErrorCode(err)) {
+    throw std::runtime_error("Packet error code check failed.");
+  }
+
+  return res;
+}
+
 bool Packet::CheckHeader(const std::string& data, uint8_t sequence) {
   return
     data.size() == kHidPackSize &&
@@ -71,34 +119,16 @@ uint16_t Packet::GetTotalLen(const std::string& data) {
   return res;
 }
 
-std::vector<uint8_t> Packet::TakeTargetBytes(const std::vector<std::string>& packets,
-                                             Instruction ins) {
-  std::vector<uint8_t> res;
-  uint8_t current_seq = 0;
-  int32_t total_len = 0;
-
-  for (auto& p : packets) {
-    if (!CheckHeader(p, current_seq)) throw std::runtime_error("Invalid Packet header.");
-
-    if (current_seq == 0) {
-      total_len = GetTotalLen(p);
-      bool ok = (ins == Instruction::kGetPubliKey &&
-                 total_len == cscrypto::kPublicKeySize + sizeof(ErrorCode)) ||
-                (ins == Instruction::kSignHash &&
-                 total_len == cscrypto::kSignatureSize + sizeof(ErrorCode));
-      if (!ok) throw std::runtime_error("Invalid Packet Len.");
-    }
-
-    auto offset = current_seq == 0 ? kFirstHidHeaderSize : kCommonHidHeaderSize;
-    res.insert(res.end(),
-               p.begin() + offset,
-               total_len > (kHidPackSize - offset) ?
-                           p.end() : p.begin() + offset + total_len - sizeof(ErrorCode));
-    ++current_seq;
-    total_len = total_len - (kHidPackSize - offset);
+bool Packet::CheckTotalLen(uint16_t total_len, Instruction ins) {
+  switch (ins) {
+    case Instruction::kGetPubliKey : return total_len == kGetPubliKeyTotalLen;
+    case Instruction::kSignHash : return total_len == kSignHashTotalLen;
   }
+  return false;
+}
 
-  return res;
+bool Packet::CheckErrorCode(ErrorCode err) {
+  return err == ErrorCode::kOk;
 }
 
 } // namespace ledger

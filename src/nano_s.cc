@@ -3,8 +3,6 @@
 #include <cscrypto/cscrypto.hpp>
 #include <iostream>
 
-#include "packet.h"
-
 namespace ledger {
 
 NanoS::NanoS() {
@@ -45,8 +43,9 @@ cscrypto::PublicKey NanoS::GetPublicKey(uint32_t index) {
                                    Packet::Instruction::kGetPubliKey);
   SendPackets(std::move(packs));
 
-  auto bytes = Packet::TakeTargetBytes({nanos_.read(kBlockingRead)},
+  auto bytes = Packet::TakeTargetBytes(ReadPackets(Packet::Instruction::kGetPubliKey),
                                        Packet::Instruction::kGetPubliKey);
+
   cscrypto::PublicKey result;
   std::copy(bytes.begin(), bytes.end(), result.begin());
   return result;
@@ -63,11 +62,8 @@ cscrypto::Signature NanoS::Sign(uint32_t key_index, const cscrypto::Hash& hash) 
   auto packs = Packet::FormPackets(data.data(), data.size(), Packet::Instruction::kSignHash);
   SendPackets(std::move(packs));
 
-  std::vector<std::string> signature_packs;
-  signature_packs.push_back(nanos_.read(kBlockingRead));
-  signature_packs.push_back(nanos_.read(kBlockingRead));
-
-  auto bytes = Packet::TakeTargetBytes(signature_packs, Packet::Instruction::kSignHash);
+  auto bytes = Packet::TakeTargetBytes(ReadPackets(Packet::Instruction::kSignHash),
+                                       Packet::Instruction::kSignHash);
 
   cscrypto::Signature res;
   std::copy(bytes.begin(), bytes.end(), res.begin());
@@ -86,6 +82,27 @@ void NanoS::SendPackets(std::vector<std::string>&& packets) {
       throw std::runtime_error("Cannot write to Nano S.");
     }
   }
+}
+
+std::vector<std::string> NanoS::ReadPackets(Packet::Instruction ins) {
+  size_t packets_to_read = 0;
+
+  switch (ins) {
+    case Packet::Instruction::kGetPubliKey :
+      packets_to_read = kNumPacksGetPublicKey;
+      break;
+    case Packet::Instruction::kSignHash :
+      packets_to_read = kNumPacksSignHash;
+  }
+
+  std::vector<std::string> res;
+
+  while (packets_to_read) {
+    res.push_back(nanos_.read(kBlockingRead));
+    --packets_to_read;
+  }
+
+  return res;
 }
 
 } // namespace ledger
