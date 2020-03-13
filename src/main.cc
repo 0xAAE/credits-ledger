@@ -7,10 +7,11 @@
 
 int main() {
   ledger::NanoS nanos;
+  const uint32_t key_index = 13;
+  const std::vector<uint8_t> data{1,2,3};
 
   try {
     nanos.Open();
-    uint32_t key_index = 13;
 
     auto public_key = nanos.GetPublicKey(key_index);
 
@@ -19,7 +20,6 @@ int main() {
 
     std::this_thread::sleep_for(std::chrono::seconds{5});
 
-    std::vector<uint8_t> data{1,2,3};
     auto hash = cscrypto::calculateHash(data.data(), data.size());
 
     std::cout << "Hash to sign: " << cscrypto::helpers::bin2Hex(hash.data(), hash.size()) << std::endl

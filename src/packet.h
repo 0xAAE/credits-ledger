@@ -39,7 +39,7 @@ class Packet {
 
   constexpr static uint8_t kClaVal = 0xE0;
 
-  enum class LedgerProtocol : uint8_t {
+  enum LedgerProtocol : uint8_t {
     kChannelId = 0x01,
     kCommandTag = 0x05
   };

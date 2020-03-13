@@ -19,6 +19,7 @@ class NanoS {
  private:
   void CheckOpen();
   void SendPackets(std::vector<std::string>&&);
+
   constexpr static uint16_t kLedgerVendId = 0x2c97;
   constexpr static int kBlockingRead = -1;
 
