@@ -3,6 +3,8 @@
 #include <cscrypto/cscrypto.hpp>
 #include <iostream>
 
+#include <HidApi.h>
+
 namespace ledger {
 
 NanoS::NanoS() {

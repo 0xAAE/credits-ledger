@@ -3,7 +3,7 @@
 #include <thread>
 
 #include <cscrypto/cscrypto.hpp>
-#include "nano_s.h"
+#include <nano_s.h>
 
 int main() {
   ledger::NanoS nanos;

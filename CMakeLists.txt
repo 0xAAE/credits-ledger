@@ -17,22 +17,14 @@ else()
 endif()
 
 add_subdirectory(third-party/cscrypto)
+add_subdirectory(src/nanos)
 
-find_package(Threads REQUIRED)
+find_package(Qt5Widgets)
 
-add_executable(${PROJECT_NAME}
-  src/nano_s.h
-  src/nano_s.cc
-  src/main.cc
-  src/packet.h
-  src/packet.cc
-  third-party/HidApi/HidApi.cpp)
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third-party/HidApi)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} cscrypto)
-
-if(NOT MSVC)
-  target_link_libraries(${PROJECT_NAME} udev)
-else()
-  target_link_libraries(${PROJECT_NAME} setupapi)
+if(${Qt5Widgets_FOUND})
+  add_subdirectory(qt)
 endif()
+
+add_executable(${PROJECT_NAME} src/main.cc)
+
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} cscrypto nanos)
